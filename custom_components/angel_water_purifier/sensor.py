@@ -129,6 +129,13 @@ class AngelWaterPurifierSensor(
 
     _attr_has_entity_name = True
 
+    @property
+    def icon(self) -> str | None:
+        """Return the icon of the sensor."""
+        if self.entity_description is not None:
+            return self.entity_description.icon
+        return None
+
     def __init__(
         self,
         coordinator: AngelWaterPurifierCoordinator,
@@ -141,9 +148,6 @@ class AngelWaterPurifierSensor(
         self._sensor_key = sensor_key
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_{sensor_key}"
-        # 显式设置图标，确保 entity_description.icon 生效
-        if description.icon:
-            self._attr_icon = description.icon
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name=entry.title,
