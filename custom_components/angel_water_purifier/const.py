@@ -67,7 +67,7 @@ BULK_SENSORS: dict[str, dict] = {
         "name": "脱盐率",
         "unit": "%", "icon": "mdi:percent",
         "device_class": None, "state_class": "measurement",
-        "group": SensorGroup.WATER_QUALITY, "cat": "diagnostic",
+        "group": SensorGroup.WATER_QUALITY, "cat": None,
     },
     # ========== 流量 & 水压 ==========
     "flow_rate": {
@@ -80,27 +80,27 @@ BULK_SENSORS: dict[str, dict] = {
         "name": "水压",
         "unit": "MPa", "icon": "mdi:gauge",
         "device_class": "pressure", "state_class": "measurement",
-        "group": SensorGroup.PRESSURE, "cat": "diagnostic",
+        "group": SensorGroup.PRESSURE, "cat": None,
     },
     # ========== 累计水量 ==========
     "total_water_usage": {
         "name": "累计纯水量",
         "unit": "L", "icon": "mdi:water",
         "device_class": None, "state_class": "total_increasing",
-        "group": SensorGroup.USAGE, "cat": "diagnostic",
+        "group": SensorGroup.USAGE, "cat": None,
     },
     "total_water_in": {
         "name": "累计总用水量",
         "unit": "L", "icon": "mdi:water",
         "device_class": None, "state_class": "total_increasing",
-        "group": SensorGroup.USAGE, "cat": "diagnostic",
+        "group": SensorGroup.USAGE, "cat": None,
     },
     # ========== 今日用水 ==========
     "today_pure_water": {
         "name": "今日纯水量",
         "unit": "L", "icon": "mdi:chart-bell-curve",
         "device_class": None, "state_class": "total_increasing",
-        "group": SensorGroup.USAGE, "cat": "diagnostic",
+        "group": SensorGroup.USAGE, "cat": None,
     },
     "today_total_water": {
         "name": "今日总用水量",
@@ -125,7 +125,7 @@ BULK_SENSORS: dict[str, dict] = {
         "name": "工作状态",
         "unit": None, "icon": "mdi:state-machine",
         "device_class": None, "state_class": None,
-        "group": SensorGroup.STATUS, "cat": "diagnostic",
+        "group": SensorGroup.STATUS, "cat": None,
     },
     "wash_state": {
         "name": "冲洗状态",
@@ -137,13 +137,13 @@ BULK_SENSORS: dict[str, dict] = {
         "name": "开关",
         "unit": None, "icon": "mdi:power",
         "device_class": None, "state_class": None,
-        "group": SensorGroup.STATUS, "cat": "diagnostic",
+        "group": SensorGroup.STATUS, "cat": None,
     },
     "online_state": {
         "name": "在线状态",
         "unit": None, "icon": "mdi:wifi",
         "device_class": None, "state_class": None,
-        "group": SensorGroup.STATUS, "cat": "diagnostic",
+        "group": SensorGroup.STATUS, "cat": None,
     },
     "hot_water_outlet": {
         "name": "热水出水",
@@ -168,7 +168,7 @@ BULK_SENSORS: dict[str, dict] = {
         "name": "故障代码",
         "unit": None, "icon": "mdi:alert-circle",
         "device_class": None, "state_class": None,
-        "group": SensorGroup.ALARM, "cat": "diagnostic",
+        "group": SensorGroup.ALARM, "cat": None,
     },
     "error_message": {
         "name": "故障信息",
@@ -283,7 +283,7 @@ FILTER_SENSOR_DEFS: dict[str, dict] = {
     "remaining_pct": {
         "name_suffix": "剩余寿命",
         "unit": "%", "icon": "mdi:percent",
-        "group": SensorGroup.FILTER, "cat": "diagnostic",
+        "group": SensorGroup.FILTER, "cat": None,
     },
     "used_days": {
         "name_suffix": "已用天数",
@@ -293,7 +293,7 @@ FILTER_SENSOR_DEFS: dict[str, dict] = {
     "remaining_days": {
         "name_suffix": "剩余天数",
         "unit": "天", "icon": "mdi:calendar-check",
-        "group": SensorGroup.FILTER, "cat": "diagnostic",
+        "group": SensorGroup.FILTER, "cat": None,
     },
     "total_days": {
         "name_suffix": "总天数",
