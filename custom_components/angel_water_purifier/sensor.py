@@ -7,6 +7,7 @@ from typing import Any
 
 from homeassistant.components.sensor import SensorEntity, SensorEntityDescription
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -62,6 +63,15 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
+def _resolve_category(cat: str | None) -> EntityCategory | None:
+    """Convert category string to EntityCategory enum."""
+    if cat == "diagnostic":
+        return EntityCategory.DIAGNOSTIC
+    if cat == "config":
+        return EntityCategory.CONFIG
+    return None
+
+
 def _make_sensor(
     coordinator: AngelWaterPurifierCoordinator,
     entry: ConfigEntry,
@@ -80,7 +90,7 @@ def _make_sensor(
             icon=cfg.get("icon"),
             device_class=cfg.get("device_class"),
             state_class=cfg.get("state_class"),
-            entity_category=cfg.get("cat"),
+            entity_category=_resolve_category(cfg.get("cat")),
             translation_key=sensor_key,
         ),
     )
@@ -105,7 +115,7 @@ def _make_filter_sensor(
             icon=cfg.get("icon"),
             device_class=None,
             state_class=cfg.get("state_class", "measurement" if cfg.get("unit") else None),
-            entity_category=cfg.get("cat"),
+            entity_category=_resolve_category(cfg.get("cat")),
             translation_key=sensor_key,
         ),
     )
