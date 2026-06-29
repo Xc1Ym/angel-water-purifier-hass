@@ -2,8 +2,6 @@
 
 > 通过安吉尔 IoT 云平台 API 在 Home Assistant 中监测你的安吉尔（Angel）净水器。
 
-![安吉尔净水器 HA 截图](screenshot.png)
-
 ![安吉尔净水器传感器概览](dashboard.png)
 
 ---
@@ -67,7 +65,9 @@ cp -r custom_components/angel_water_purifier /path/to/ha/config/custom_component
 
 ### 抓包获取凭证
 
-使用 Proxyman / Charles / Whistle 等工具对微信小程序进行 HTTPS 抓包，打开安吉尔小程序后，过滤 `iot.angelgroup.com.cn` 的请求。
+使用 Proxyman / Charles / Whistle 等工具对微信小程序进行 HTTPS 抓包，打开安吉尔小程序后，过滤 `iot.angelgroup.com.cn` 的请求：
+
+![抓包示意图](screenshot.png)
 
 从请求中提取以下信息：
 
