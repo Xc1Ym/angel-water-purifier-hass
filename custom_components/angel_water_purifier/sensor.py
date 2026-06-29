@@ -141,6 +141,9 @@ class AngelWaterPurifierSensor(
         self._sensor_key = sensor_key
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_{sensor_key}"
+        # 显式设置图标，确保 entity_description.icon 生效
+        if description.icon:
+            self._attr_icon = description.icon
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name=entry.title,

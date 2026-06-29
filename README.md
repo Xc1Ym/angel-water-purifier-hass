@@ -4,6 +4,8 @@
 
 ![安吉尔净水器 HA 截图](screenshot.png)
 
+![安吉尔净水器传感器概览](dashboard.png)
+
 ---
 
 ## 工作原理
