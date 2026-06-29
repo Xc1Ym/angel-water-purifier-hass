@@ -3,20 +3,18 @@
     "step": {
       "user": {
         "title": "安吉尔净水器 — 配置",
-        "description": "从微信小程序抓取安吉尔 IoT 云平台 API 信息。\n\nAPI地址: iot.angelgroup.com.cn\n\n填入以下信息（从微信小程序请求头获取）：",
         "data": {
           "sn": "设备序列号 (SN)",
-          "access_token": "Bearer Token 访问令牌",
+          "access_token": "Bearer Token",
           "user_id": "用户 ID (User-Id)",
-          "wx_open_id": "微信 OpenID (wxOpenId)",
+          "wx_open_id": "微信 OpenID (可选)",
           "scan_interval": "轮询间隔（秒）"
         }
       }
     },
     "error": {
       "cannot_connect": "无法连接到安吉尔 IoT 云平台",
-      "invalid_auth": "Token 可能已过期",
-      "unknown": "未知错误"
+      "invalid_auth": "Token 可能已过期"
     },
     "abort": {
       "already_configured": "该设备已配置"
@@ -25,10 +23,8 @@
   "options": {
     "step": {
       "init": {
-        "title": "安吉尔净水器选项",
-        "data": {
-          "scan_interval": "轮询间隔（秒）"
-        }
+        "title": "安吉尔净水器 - 选项",
+        "data": { "scan_interval": "轮询间隔（秒）" }
       }
     }
   },
@@ -38,17 +34,36 @@
       "tds_out": { "name": "出水 TDS" },
       "tds_rejection_rate": { "name": "脱盐率" },
       "flow_rate": { "name": "当前流量" },
+      "water_pressure": { "name": "水压" },
       "total_water_usage": { "name": "累计纯水量" },
       "total_water_in": { "name": "累计总用水量" },
       "today_pure_water": { "name": "今日纯水量" },
       "today_total_water": { "name": "今日总用水量" },
-      "water_pressure": { "name": "水压" },
-      "filter_pcr_remaining": { "name": "PCR 滤芯寿命" },
+      "total_target_water": { "name": "目标水量" },
+      "mineral_water_total": { "name": "矿物质水总量" },
       "working_status": { "name": "工作状态" },
+      "wash_state": { "name": "冲洗状态" },
+      "is_open": { "name": "开关" },
+      "online_state": { "name": "在线状态" },
+      "hot_water_outlet": { "name": "热水出水" },
+      "regeneration_step": { "name": "再生步骤" },
+      "bind_type": { "name": "绑定类型" },
       "error_code": { "name": "故障代码" },
       "error_message": { "name": "故障信息" },
+      "refresh_time": { "name": "数据刷新时间" },
+      "active_time": { "name": "最后活跃时间" },
       "device_name": { "name": "设备名称" },
-      "refresh_time": { "name": "最后刷新" }
+      "serial_number": { "name": "序列号" },
+      "product_model": { "name": "产品型号" },
+      "product_name": { "name": "产品名称" },
+      "product_code": { "name": "产品代码" },
+      "reminder_push": { "name": "提醒推送" },
+      "water_intake_push": { "name": "饮水提醒推送" },
+      "machine_failure_push": { "name": "故障推送" },
+      "salinity_push": { "name": "盐度推送" },
+      "receive_water_usage_month": { "name": "月度用水报告" },
+      "receive_filter_replace": { "name": "滤芯更换通知" },
+      "target_switch": { "name": "目标水量开关" }
     },
     "binary_sensor": {
       "online_state": { "name": "在线状态" },
@@ -59,17 +74,6 @@
       "filter_change_required": { "name": "需要更换滤芯" },
       "leak_detected": { "name": "漏水检测" },
       "water_quality_warning": { "name": "水质警告" }
-    },
-    "sensor_working_status": {
-      "state": {
-        "standby": "待机",
-        "working": "工作中",
-        "flushing": "冲洗中",
-        "heating": "加热中",
-        "filtering": "过滤中",
-        "error": "故障",
-        "idle": "空闲"
-      }
     }
   }
 }

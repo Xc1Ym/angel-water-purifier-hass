@@ -15,7 +15,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, MANUFACTURER, FILTER_KEYS
+from .const import DOMAIN, MANUFACTURER, MAX_FILTERS
 from .coordinator import AngelWaterPurifierCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -176,35 +176,35 @@ class AngelWaterPurifierBinarySensor(
 
         if self._sensor_key == "is_open":
             val = data.get("is_open")
-            if isinstance(val, str):
-                return val == "1"
-            if isinstance(val, (int, float)):
-                return bool(val)
+            if val is not None:
+                return bool(int(val))
             return None
 
         if self._sensor_key == "is_flushing":
-            val = data.get("is_flushing")
-            if isinstance(val, (int, float)):
-                return bool(val)
+            val = data.get("wash_state")
+            if val is not None:
+                return bool(int(val))
             return None
 
         if self._sensor_key == "hot_water_outlet":
             val = data.get("hot_water_outlet")
-            if isinstance(val, (int, float)):
-                return bool(val)
+            if val is not None:
+                return bool(int(val))
             return None
 
         if self._sensor_key == "is_working":
             status = data.get("working_status")
-            # working_status 在传感器中已被转为字符串 "working"/"standby"
             if isinstance(status, str):
-                return status in ("working", "working (1)")
+                return status == "working"
+            if isinstance(status, (int, str)):
+                return str(status) == "1"
             return None
 
         if self._sensor_key == "filter_change_required":
-            # 检查 PCR 滤芯是否低于阈值
-            for key in FILTER_KEYS:
-                val = data.get(key)
+            # 检查所有滤芯剩余寿命是否低于阈值
+            for idx in range(1, MAX_FILTERS + 1):
+                pct_key = f"filter_{idx}_remaining_pct"
+                val = data.get(pct_key)
                 if val is not None:
                     try:
                         if float(val) <= 5:
