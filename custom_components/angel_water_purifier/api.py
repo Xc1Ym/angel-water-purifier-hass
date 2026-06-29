@@ -18,6 +18,7 @@ from typing import Any
 
 from aiohttp import ClientConnectorError, ClientError, ClientTimeout, ContentTypeError
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import aiohttp_client
 
 from .coordinator import AngelDeviceAPI
 
@@ -84,7 +85,7 @@ class AngelCloudAPI(AngelDeviceAPI):
 
     async def async_connect(self) -> bool:
         """连接测试：调用 device-detail?dataType=0 验证凭证有效性."""
-        self._session = self.hass.helpers.aiohttp_client.async_get_clientsession()
+        self._session = aiohttp_client.async_get_clientsession(self.hass)
 
         if not self._sn:
             _LOGGER.error("❌ 未配置设备 SN")
@@ -217,7 +218,7 @@ class AngelCloudAPI(AngelDeviceAPI):
     ) -> dict[str, Any] | None:
         """执行 HTTP 请求."""
         if self._session is None:
-            self._session = self.hass.helpers.aiohttp_client.async_get_clientsession()
+            self._session = aiohttp_client.async_get_clientsession(self.hass)
 
         url = f"{API_BASE}{path}"
         headers = self._build_headers()
