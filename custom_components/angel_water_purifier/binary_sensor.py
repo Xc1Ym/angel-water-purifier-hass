@@ -120,6 +120,13 @@ class AngelWaterPurifierBinarySensor(
 
     _attr_has_entity_name = True
 
+    @property
+    def icon(self) -> str | None:
+        """Return the icon of the binary sensor."""
+        if self.entity_description is not None:
+            return self.entity_description.icon
+        return None
+
     def __init__(
         self,
         coordinator: AngelWaterPurifierCoordinator,
