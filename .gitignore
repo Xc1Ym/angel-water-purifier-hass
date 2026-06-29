@@ -1,31 +1,28 @@
-# Python
+
 __pycache__/
-*.py[cod]
-*.egg-info/
-dist/
-*.egg
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
 .DS_Store
-Thumbs.db
-
-# HA
-*.hass
-*.storage
-*.db
-
-# Environment
 .env
-venv/
+.idea/
 .venv/
-
-# Distribution
+.vscode/
+*.db
+*.egg
+*.egg-info/
+*.hass
+*.py[cod]
+*.storage
+*.swo
+*.swp
 *.zip
-数据包/
+# Distribution
+# Environment
+# HA
+# IDE
+# OS
+# Python
 capture-guide.png
+dist/
+screenshot.png
+Thumbs.db
+venv/
+数据包/
