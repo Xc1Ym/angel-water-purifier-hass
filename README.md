@@ -65,9 +65,7 @@ cp -r custom_components/angel_water_purifier /path/to/ha/config/custom_component
 
 ### 抓包获取凭证
 
-使用 Proxyman / Charles / Whistle 等工具对微信小程序进行 HTTPS 抓包，打开安吉尔小程序后，过滤 `iot.angelgroup.com.cn` 的请求：
-
-![抓包获取 Token 和 SN](capture-guide.png)
+使用 Proxyman / Charles / Whistle 等工具对微信小程序进行 HTTPS 抓包，打开安吉尔小程序后，过滤 `iot.angelgroup.com.cn` 的请求。
 
 从请求中提取以下信息：
 
