@@ -63,6 +63,21 @@ cp -r custom_components/angel_water_purifier /path/to/ha/config/custom_component
 
 重启 HA，然后 **设置 → 设备与服务 → 添加集成**，搜索 "Angel Water Purifier"。
 
+### 抓包获取凭证
+
+使用 Proxyman / Charles / Whistle 等工具对微信小程序进行 HTTPS 抓包，打开安吉尔小程序后，过滤 `iot.angelgroup.com.cn` 的请求：
+
+![抓包获取 Token 和 SN](capture-guide.png)
+
+从请求中提取以下信息：
+
+| 参数 | 位置 | 示例 |
+|------|------|------|
+| **SN** | URL 参数 `sn=` | `645957184923402677` |
+| **Bearer Token** | 请求头 `Authorization` | `f6b5fab8-...` |
+| **User ID** | 请求头 `User-Id` | `1951909962586279938` |
+| **wxOpenId** | URL 参数（可选） | `oS5LE5OGWT41y1lFmNgzwQndFfXc` |
+
 ### 配置参数
 
 | 参数 | 说明 | 获取方式 |
