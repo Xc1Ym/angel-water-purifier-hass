@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# HA
+*.hass
+*.storage
+*.db
+
+# Environment
+.env
+venv/
+.venv/
+
+# Distribution
+*.zip

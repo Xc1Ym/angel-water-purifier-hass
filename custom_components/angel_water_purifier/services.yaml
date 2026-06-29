@@ -1,0 +1,45 @@
+"""Services for the Angel Water Purifier integration."""
+set_mode:
+  name: Set Mode
+  description: Set the water purifier operating mode.
+  target:
+    entity:
+      integration: angel_water_purifier
+  fields:
+    mode:
+      name: Mode
+      description: Operating mode to set.
+      required: true
+      selector:
+        select:
+          options:
+            - label: Normal
+              value: "normal"
+            - label: Eco
+              value: "eco"
+            - label: Boost
+              value: "boost"
+
+reset_filter:
+  name: Reset Filter
+  description: Reset the filter life counter after replacing a filter.
+  target:
+    device:
+      integration: angel_water_purifier
+  fields:
+    filter_type:
+      name: Filter Type
+      description: Which filter to reset.
+      required: true
+      selector:
+        select:
+          options:
+            - label: PCR 滤芯
+              value: "filter_pcr"
+
+flush:
+  name: Flush
+  description: Manually trigger a flushing cycle for the RO membrane.
+  target:
+    device:
+      integration: angel_water_purifier

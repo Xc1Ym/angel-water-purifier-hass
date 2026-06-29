@@ -1,0 +1,8 @@
+{
+  "name": "Angel Water Purifier (安吉尔净水器)",
+  "filename": "angel_water_purifier.zip",
+  "hide_default_branch": true,
+  "homeassistant": "2024.1.0",
+  "render_readme": true,
+  "zip_release": true
+}

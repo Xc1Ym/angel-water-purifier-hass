@@ -1,0 +1,75 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "安吉尔净水器 — 配置",
+        "description": "从微信小程序抓取安吉尔 IoT 云平台 API 信息。\n\nAPI地址: iot.angelgroup.com.cn\n\n填入以下信息（从微信小程序请求头获取）：",
+        "data": {
+          "sn": "设备序列号 (SN)",
+          "access_token": "Bearer Token 访问令牌",
+          "user_id": "用户 ID (User-Id)",
+          "wx_open_id": "微信 OpenID (wxOpenId)",
+          "scan_interval": "轮询间隔（秒）"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "无法连接到安吉尔 IoT 云平台",
+      "invalid_auth": "Token 可能已过期",
+      "unknown": "未知错误"
+    },
+    "abort": {
+      "already_configured": "该设备已配置"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "安吉尔净水器选项",
+        "data": {
+          "scan_interval": "轮询间隔（秒）"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "tds_in": { "name": "进水 TDS" },
+      "tds_out": { "name": "出水 TDS" },
+      "tds_rejection_rate": { "name": "脱盐率" },
+      "flow_rate": { "name": "当前流量" },
+      "total_water_usage": { "name": "累计纯水量" },
+      "total_water_in": { "name": "累计总用水量" },
+      "today_pure_water": { "name": "今日纯水量" },
+      "today_total_water": { "name": "今日总用水量" },
+      "water_pressure": { "name": "水压" },
+      "filter_pcr_remaining": { "name": "PCR 滤芯寿命" },
+      "working_status": { "name": "工作状态" },
+      "error_code": { "name": "故障代码" },
+      "error_message": { "name": "故障信息" },
+      "device_name": { "name": "设备名称" },
+      "refresh_time": { "name": "最后刷新" }
+    },
+    "binary_sensor": {
+      "online_state": { "name": "在线状态" },
+      "is_open": { "name": "开关" },
+      "is_flushing": { "name": "冲洗中" },
+      "hot_water_outlet": { "name": "热水出水" },
+      "is_working": { "name": "运行中" },
+      "filter_change_required": { "name": "需要更换滤芯" },
+      "leak_detected": { "name": "漏水检测" },
+      "water_quality_warning": { "name": "水质警告" }
+    },
+    "sensor_working_status": {
+      "state": {
+        "standby": "待机",
+        "working": "工作中",
+        "flushing": "冲洗中",
+        "heating": "加热中",
+        "filtering": "过滤中",
+        "error": "故障",
+        "idle": "空闲"
+      }
+    }
+  }
+}
