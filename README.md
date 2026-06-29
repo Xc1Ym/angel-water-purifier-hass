@@ -2,8 +2,6 @@
 
 > 通过安吉尔 IoT 云平台 API 在 Home Assistant 中监测你的安吉尔（Angel）净水器。
 
-![安吉尔净水器 HA 截图](screenshot.png)
-
 ![安吉尔净水器传感器概览](dashboard.png)
 
 ---
