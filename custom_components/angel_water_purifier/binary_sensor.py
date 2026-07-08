@@ -10,6 +10,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -26,56 +27,56 @@ BINARY_SENSOR_TYPES: dict[str, dict[str, Any]] = {
         "name": "在线状态",
         "device_class": BinarySensorDeviceClass.CONNECTIVITY,
         "icon": "mdi:wifi",
-        "entity_category": "diagnostic",
+        "entity_category": EntityCategory.DIAGNOSTIC,
     },
     # 开关状态
     "is_open": {
         "name": "开关",
         "device_class": BinarySensorDeviceClass.POWER,
         "icon": "mdi:power",
-        "entity_category": "diagnostic",
+        "entity_category": EntityCategory.DIAGNOSTIC,
     },
     # 冲洗中
     "is_flushing": {
         "name": "冲洗中",
         "device_class": BinarySensorDeviceClass.RUNNING,
         "icon": "mdi:water-sync",
-        "entity_category": "diagnostic",
+        "entity_category": EntityCategory.DIAGNOSTIC,
     },
     # 热水出水口
     "hot_water_outlet": {
         "name": "热水出水",
         "device_class": BinarySensorDeviceClass.HEAT,
         "icon": "mdi:water-thermometer",
-        "entity_category": "diagnostic",
+        "entity_category": EntityCategory.DIAGNOSTIC,
     },
     # 工作状态 (衍生: deviceState == "1")
     "is_working": {
         "name": "运行中",
         "device_class": BinarySensorDeviceClass.RUNNING,
         "icon": "mdi:water-pump",
-        "entity_category": "diagnostic",
+        "entity_category": EntityCategory.DIAGNOSTIC,
     },
     # 滤芯更换提醒
     "filter_change_required": {
         "name": "需要更换滤芯",
         "device_class": BinarySensorDeviceClass.PROBLEM,
         "icon": "mdi:filter-remove",
-        "entity_category": "diagnostic",
+        "entity_category": EntityCategory.DIAGNOSTIC,
     },
     # 漏水检测 (从故障码衍生)
     "leak_detected": {
         "name": "漏水检测",
         "device_class": BinarySensorDeviceClass.MOISTURE,
         "icon": "mdi:water-alert",
-        "entity_category": "diagnostic",
+        "entity_category": EntityCategory.DIAGNOSTIC,
     },
     # 水质警告
     "water_quality_warning": {
         "name": "水质警告",
         "device_class": BinarySensorDeviceClass.PROBLEM,
         "icon": "mdi:water-alert",
-        "entity_category": "diagnostic",
+        "entity_category": EntityCategory.DIAGNOSTIC,
     },
 }
 
