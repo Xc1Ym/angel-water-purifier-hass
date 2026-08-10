@@ -146,12 +146,16 @@ class AngelCloudAPI(AngelDeviceAPI):
             if await self._refresh_token_if_needed(force=True):
                 _LOGGER.info("✅ Token 刷新成功 | SN=%s", self._sn)
             else:
-                self._last_error = "invalid_auth"
-                _LOGGER.error(
-                    "❌ Refresh Token 无效或刷新失败，请重新从小程序抓包获取后更新配置 | SN=%s",
+                # 降级：refresh_token 无效但现有 access_token 可能还有效，先继续
+                _LOGGER.warning(
+                    "⚠️ Refresh Token 无效或刷新失败，降级使用现有 access_token，"
+                    "请重新从小程序抓包更新配置 | SN=%s",
                     self._sn,
                 )
-                return False
+                if not self._token:
+                    self._last_error = "invalid_auth"
+                    _LOGGER.error("❌ 无有效 Token | SN=%s", self._sn)
+                    return False
 
         if not self._token:
             self._last_error = "invalid_auth"
