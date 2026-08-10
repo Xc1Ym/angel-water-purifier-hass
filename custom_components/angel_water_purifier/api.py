@@ -330,6 +330,47 @@ class AngelCloudAPI(AngelDeviceAPI):
         return False
 
     # ------------------------------------------------------------------ #
+    #  Device discovery（SN 自动发现）
+    # ------------------------------------------------------------------ #
+
+    async def async_discover_devices(self) -> list[dict[str, str]] | None:
+        """通过账号接口自动发现绑定的设备列表.
+
+        服务端强制要求 wxOpenId。返回:
+        - list: 设备列表 [{"sn": ..., "name": ...}, ...]
+        - []:   账号下无设备
+        - None: 缺少 wxOpenId，无法发现
+        """
+        if not self._wx_open_id:
+            _LOGGER.warning("⚠️ SN 未配置且缺少 wxOpenId，无法自动发现设备")
+            return None
+
+        if self._session is None:
+            self._session = aiohttp_client.async_get_clientsession(self.hass)
+
+        raw = await self._request(
+            method="GET",
+            path="/iotmp-openapi/v1/binding-info/user-device-page",
+            params={"current": "1", "pageSize": "50", "wxOpenId": self._wx_open_id},
+        )
+        payload = self._unwrap_response(raw)
+        if not isinstance(payload, dict):
+            _LOGGER.warning("⚠️ 设备列表获取失败: %s", raw)
+            return []
+
+        records = payload.get("records", [])
+        devices = [
+            {"sn": str(r["sn"]), "name": str(r.get("deviceName") or r["sn"])}
+            for r in records
+            if isinstance(r, dict) and r.get("sn")
+        ]
+        _LOGGER.info(
+            "📱 发现 %d 台设备: %s", len(devices),
+            ", ".join(f"{d['name']}({d['sn']})" for d in devices),
+        )
+        return devices
+
+    # ------------------------------------------------------------------ #
     #  HTTP
     # ------------------------------------------------------------------ #
 

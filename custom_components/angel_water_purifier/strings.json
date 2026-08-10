@@ -3,20 +3,27 @@
     "step": {
       "user": {
         "title": "安吉尔净水器 — 配置",
-        "description": "凭证来自微信小程序抓包：\n\n- **SN**：设备详情请求 URL 的 `sn=` 参数\n- **Bearer Token**：请求头 `Authorization: Bearer xxx`（只填 UUID，不带 `Bearer ` 前缀）\n- **Refresh Token**（推荐）：登录请求 `POST /iotmp-openauth/oauth/token` 响应体 JSON 中的 `refresh_token` 字段，填写后 access_token 自动续期，无需手动更新\n- **User ID**：请求头 `User-Id`\n\n提交时集成会实测凭证，无效将提示错误。",
+        "description": "凭证来自微信小程序抓包：\n\n- **SN**（可留空）：设备详情请求 URL 的 `sn=` 参数；留空并填写 wxOpenId 时自动发现账号绑定的设备\n- **Bearer Token**：请求头 `Authorization: Bearer xxx`（只填 UUID，不带 `Bearer ` 前缀）\n- **Refresh Token**（推荐）：登录请求 `POST /iotmp-openauth/oauth/token` 响应体 JSON 中的 `refresh_token` 字段，填写后 access_token 自动续期，无需手动更新\n- **User ID**：请求头 `User-Id`\n- **wxOpenId**：URL 参数（SN 留空时必填，用于自动发现设备）\n\n提交时集成会实测凭证，无效将提示错误。",
         "data": {
-          "sn": "设备序列号 (SN)",
+          "sn": "设备序列号 (SN，可留空自动发现)",
           "access_token": "Bearer Token (access_token)",
           "refresh_token": "Refresh Token (可选，填了可自动续期)",
           "user_id": "用户 ID (User-Id)",
-          "wx_open_id": "微信 OpenID (可选)",
+          "wx_open_id": "微信 OpenID (SN 留空时必填)",
           "scan_interval": "轮询间隔（秒）"
         }
+      },
+      "select_device": {
+        "title": "选择设备",
+        "description": "账号下发现多台设备，请选择要接入的设备。",
+        "data": { "sn": "设备" }
       }
     },
     "error": {
       "cannot_connect": "无法连接到安吉尔 IoT 云平台，请检查 SN 和网络",
       "invalid_auth": "Token 无效或已过期，请检查 Bearer Token / Refresh Token 是否填反、是否带了 `Bearer ` 前缀，或重新抓包获取",
+      "no_devices": "账号下未找到绑定设备，请检查 wxOpenId 或手动填写 SN",
+      "need_wxopenid": "SN 留空时必填 wxOpenId，用于自动发现设备",
       "unknown": "验证时发生未知错误，请查看日志"
     },
     "abort": {

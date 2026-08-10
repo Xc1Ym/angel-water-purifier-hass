@@ -128,11 +128,13 @@ cp -r custom_components/angel_water_purifier /path/to/ha/config/custom_component
 
 | 参数 | 说明 | 获取方式 |
 |------|------|----------|
-| **SN** | 设备序列号 | 微信小程序抓包 URL 参数 `sn=` |
+| **SN** | 设备序列号（可留空，自动发现） | 微信小程序抓包 URL 参数 `sn=`，或留空由集成自动发现 |
 | **Bearer Token** | 访问令牌 | 请求头 `Authorization: Bearer xxx` |
 | **Refresh Token** | 刷新令牌（可选，推荐） | oauth/token 返回包 JSON 的 `refresh_token` 字段 |
 | **User ID** | 用户 ID | 请求头 `User-Id` |
-| **wxOpenId** | 微信 OpenID | URL 参数 `wxOpenId=`（可选） |
+| **wxOpenId** | 微信 OpenID（SN 留空时必填） | URL 参数 `wxOpenId=` |
+
+> 💡 **SN 自动发现**：SN 留空并填写 wxOpenId 后，集成会调用账号设备列表接口自动发现绑定设备（单台自动填入，多台弹出选择）。
 
 > 💡 使用 Proxyman / Charles / Whistle 等工具对微信小程序进行 HTTPS 抓包即可获取以上信息。填写 Refresh Token 后，集成会自动续期访问令牌（access_token 约 24h 失效，refresh_token 约 30 天滑动续期），无需手动更新；Refresh Token 也可以之后随时在集成的"选项"页补充。
 
