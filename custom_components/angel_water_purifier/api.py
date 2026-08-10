@@ -296,6 +296,11 @@ class AngelCloudAPI(AngelDeviceAPI):
                 continue
 
             result = self._parse_all(raw)
+            if not result:
+                _LOGGER.warning(
+                    "⚠️ 解析结果为空（SN=%s，凭证可能失效、设备离线或 API 字段变化）",
+                    self._sn,
+                )
             _LOGGER.debug("📊 解析到 %d 个传感器", len(result))
             return result
 
@@ -412,6 +417,15 @@ class AngelCloudAPI(AngelDeviceAPI):
 
         payload = self._unwrap_response(raw)
         if not isinstance(payload, dict):
+            _LOGGER.warning("⚠️ 响应无法解析: %s", str(raw)[:200])
+            return result
+
+        # 业务层错误（HTTP 200 但 retCode != 0）：unwrap 失败时 payload 是原始响应
+        if "retCode" in payload and str(payload.get("retCode")) not in ("0", "200"):
+            _LOGGER.warning(
+                "⚠️ API 业务错误: retCode=%s retMsg=%s",
+                payload.get("retCode"), payload.get("retMsg"),
+            )
             return result
 
         # Log raw field names for debugging
