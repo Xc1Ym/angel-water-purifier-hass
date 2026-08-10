@@ -93,7 +93,7 @@ BULK_SENSORS: dict[str, dict] = {
     "total_water_in": {
         "name": "累计总用水量",
         "unit": "L", "icon": "mdi:water",
-        "device_class": None, "state_class": "total_increasing",
+        "device_class": "water", "state_class": "total_increasing",
         "group": SensorGroup.USAGE, "cat": None,
     },
     # ========== 今日用水 ==========
@@ -106,8 +106,8 @@ BULK_SENSORS: dict[str, dict] = {
     "today_total_water": {
         "name": "今日总用水量",
         "unit": "L", "icon": "mdi:chart-bell-curve",
-        "device_class": None, "state_class": "total_increasing",
-        "group": SensorGroup.USAGE, "cat": "diagnostic",
+        "device_class": "water", "state_class": "total_increasing",
+        "group": SensorGroup.USAGE, "cat": None,
     },
     "total_target_water": {
         "name": "目标水量",
