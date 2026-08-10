@@ -91,6 +91,8 @@ class AngelCloudAPI(AngelDeviceAPI):
         self._user_id = user_id
         self._wx_open_id = wx_open_id
         self._refresh_token = refresh_token
+        # 配置里的初始 refresh_token（seed 基线，用于区分"用户更新配置"与"运行时旋转"）
+        self._configured_refresh_token = refresh_token
         self._session = None
         self._device_info: dict[str, Any] = {}
 
@@ -194,7 +196,12 @@ class AngelCloudAPI(AngelDeviceAPI):
     # ------------------------------------------------------------------ #
 
     async def _load_tokens(self) -> None:
-        """从 HA Store 加载持久化的 token 状态（按 SN 隔离）."""
+        """从 HA Store 加载持久化的 token 状态（按 SN 隔离）.
+
+        OAuth2 旋转后配置里的 refresh_token 必然过期（旧链作废），
+        因此优先使用 Store 中运行时旋转出的最新值；
+        仅当用户主动更新了配置（配置值 != 记录的 seed）时使用配置值。
+        """
         from homeassistant.helpers.storage import Store
 
         self._token_store = Store[dict[str, Any]](
@@ -204,9 +211,16 @@ class AngelCloudAPI(AngelDeviceAPI):
         if not isinstance(data, dict):
             return
 
-        # 配置项里的 refresh_token 优先，Store 里缓存的兜底
-        self._refresh_token = self._refresh_token or data.get("refresh_token", "")
-        self._token = self._token or data.get("access_token", "")
+        seed = data.get("seed_refresh_token", "")
+        user_updated = bool(self._refresh_token) and self._refresh_token != seed
+
+        if not user_updated:
+            # 配置未变：Store 中旋转后的最新值优先（覆盖已过期的配置值）
+            if data.get("access_token"):
+                self._token = data["access_token"]
+            if data.get("refresh_token"):
+                self._refresh_token = data["refresh_token"]
+
         self._expires_at = data.get("expires_at")
         self._refresh_expires_at = data.get("refresh_expires_at")
 
@@ -214,9 +228,15 @@ class AngelCloudAPI(AngelDeviceAPI):
         """持久化最新 token，供重启后继续自动续期."""
         if self._token_store is None:
             return
+        previous = await self._token_store.async_load() or {}
         await self._token_store.async_save({
             "access_token": self._token,
             "refresh_token": self._refresh_token,
+            # seed 基线保持首次配置值，用于识别用户后续是否主动更新配置
+            "seed_refresh_token": previous.get(
+                "seed_refresh_token",
+                self._configured_refresh_token or self._refresh_token,
+            ),
             "expires_at": self._expires_at,
             "refresh_expires_at": self._refresh_expires_at,
         })
