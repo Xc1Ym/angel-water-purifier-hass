@@ -101,6 +101,14 @@ class AngelCloudAPI(AngelDeviceAPI):
         self._token_lock = asyncio.Lock()
         self._token_store = None
 
+        # 最近一次连接失败原因（供 config flow 区分错误类型）
+        self._last_error: str = ""
+
+    @property
+    def last_error(self) -> str:
+        """最近一次连接失败原因: invalid_auth / cannot_connect / 空字符串."""
+        return self._last_error
+
     @property
     def device_info(self) -> dict[str, Any]:
         return self._device_info
@@ -120,13 +128,16 @@ class AngelCloudAPI(AngelDeviceAPI):
     # ------------------------------------------------------------------ #
 
     async def async_connect(self) -> bool:
+        self._last_error = ""
         self._session = aiohttp_client.async_get_clientsession(self.hass)
         await self._load_tokens()
 
         if not self._sn:
+            self._last_error = "config"
             _LOGGER.error("❌ 未配置 SN")
             return False
         if not self._token and not self._refresh_token:
+            self._last_error = "config"
             _LOGGER.error("❌ 未配置 Token 或 Refresh Token")
             return False
 
@@ -135,6 +146,7 @@ class AngelCloudAPI(AngelDeviceAPI):
             if await self._refresh_token_if_needed(force=True):
                 _LOGGER.info("✅ Token 刷新成功 | SN=%s", self._sn)
             else:
+                self._last_error = "invalid_auth"
                 _LOGGER.error(
                     "❌ Refresh Token 无效或刷新失败，请重新从小程序抓包获取后更新配置 | SN=%s",
                     self._sn,
@@ -142,16 +154,19 @@ class AngelCloudAPI(AngelDeviceAPI):
                 return False
 
         if not self._token:
+            self._last_error = "invalid_auth"
             _LOGGER.error("❌ 无有效 Token")
             return False
 
         try:
             raw = await self._request_device_detail(data_type=0)
         except (ClientError, asyncio.TimeoutError) as exc:
+            self._last_error = "cannot_connect"
             _LOGGER.error("❌ 连接失败: %s", exc)
             return False
 
         if raw is None:
+            self._last_error = "invalid_auth"
             _LOGGER.warning("⚠️ SN=%s 无响应 (Token 可能过期)", self._sn)
             return False
 

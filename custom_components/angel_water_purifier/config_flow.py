@@ -10,7 +10,9 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.exceptions import HomeAssistantError
 
+from .api import AngelCloudAPI
 from .const import (
     CONF_ACCESS_TOKEN,
     CONF_REFRESH_TOKEN,
@@ -23,6 +25,14 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class CannotConnect(HomeAssistantError):
+    """Error to indicate we cannot connect."""
+
+
+class InvalidAuth(HomeAssistantError):
+    """Error to indicate there is invalid auth."""
 
 
 class AngelWaterPurifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -42,22 +52,36 @@ class AngelWaterPurifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            return self.async_create_entry(
-                title=user_input.get(
-                    CONF_NAME,
-                    f"安吉尔净水器 (SN: {user_input[CONF_SN]})",
-                ),
-                data={
-                    CONF_SN: user_input[CONF_SN],
-                    CONF_ACCESS_TOKEN: user_input.get(CONF_ACCESS_TOKEN, ""),
-                    CONF_REFRESH_TOKEN: user_input.get(CONF_REFRESH_TOKEN, ""),
-                    CONF_USER_ID: user_input.get(CONF_USER_ID, ""),
-                    CONF_WX_OPEN_ID: user_input.get(CONF_WX_OPEN_ID, ""),
-                    CONF_SCAN_INTERVAL: user_input.get(
-                        CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+            # SN 作为唯一标识，防止同一设备重复配置
+            await self.async_set_unique_id(user_input[CONF_SN])
+            self._abort_if_unique_id_configured()
+
+            try:
+                await self._validate_input(user_input)
+            except CannotConnect:
+                errors["base"] = "cannot_connect"
+            except InvalidAuth:
+                errors["base"] = "invalid_auth"
+            except Exception:  # noqa: BLE001 - 未知错误统一提示
+                _LOGGER.exception("Unexpected error during validation")
+                errors["base"] = "unknown"
+            else:
+                return self.async_create_entry(
+                    title=user_input.get(
+                        CONF_NAME,
+                        f"安吉尔净水器 (SN: {user_input[CONF_SN]})",
                     ),
-                },
-            )
+                    data={
+                        CONF_SN: user_input[CONF_SN],
+                        CONF_ACCESS_TOKEN: user_input.get(CONF_ACCESS_TOKEN, ""),
+                        CONF_REFRESH_TOKEN: user_input.get(CONF_REFRESH_TOKEN, ""),
+                        CONF_USER_ID: user_input.get(CONF_USER_ID, ""),
+                        CONF_WX_OPEN_ID: user_input.get(CONF_WX_OPEN_ID, ""),
+                        CONF_SCAN_INTERVAL: user_input.get(
+                            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+                        ),
+                    },
+                )
 
         data_schema = vol.Schema({
             vol.Required(CONF_SN): str,
@@ -78,6 +102,28 @@ class AngelWaterPurifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "api_base": "iot.angelgroup.com.cn",
             },
         )
+
+    async def _validate_input(self, user_input: dict[str, Any]) -> None:
+        """验证凭证：真实请求一次 API，无效则抛出对应错误.
+
+        配置了 refresh_token 时会先刷新换取最新 token 再验证。
+        """
+        api = AngelCloudAPI(
+            hass=self.hass,
+            config=user_input,
+            sn=user_input[CONF_SN],
+            token=user_input.get(CONF_ACCESS_TOKEN, ""),
+            refresh_token=user_input.get(CONF_REFRESH_TOKEN, ""),
+            user_id=user_input.get(CONF_USER_ID, ""),
+            wx_open_id=user_input.get(CONF_WX_OPEN_ID, ""),
+        )
+        connected = await api.async_connect()
+        await api.async_disconnect()
+
+        if not connected:
+            if api.last_error == "invalid_auth":
+                raise InvalidAuth
+            raise CannotConnect
 
     @staticmethod
     @callback
