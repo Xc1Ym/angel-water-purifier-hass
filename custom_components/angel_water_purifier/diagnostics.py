@@ -4,6 +4,7 @@ Helps debug the API field mapping by showing raw response data.
 """
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -35,6 +36,9 @@ async def async_get_config_entry_diagnostics(
                 "wx_open_id": entry.data.get("wx_open_id", ""),
                 # Token 不输出完整值，仅标记是否已配置
                 "access_token_configured": bool(entry.data.get("access_token")),
+                "refresh_token_configured": bool(
+                    entry.data.get("refresh_token") or entry.options.get("refresh_token")
+                ),
             },
             "options": dict(entry.options),
         },
@@ -42,6 +46,13 @@ async def async_get_config_entry_diagnostics(
             "connected": device_api.connected if device_api else None,
             "sn": device_api.sn if hasattr(device_api, "sn") else None,
             "device_info": device_api.device_info if hasattr(device_api, "device_info") else None,
+            # Token 状态（不输出 token 本身）
+            "has_refresh_token": device_api.has_refresh_token if device_api else None,
+            "token_expires_at": (
+                datetime.fromtimestamp(device_api.token_expires_at).isoformat()
+                if device_api and device_api.token_expires_at
+                else None
+            ),
         },
         "coordinator": {
             "last_update_success": coordinator.last_update_success if coordinator else None,

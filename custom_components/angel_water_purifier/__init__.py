@@ -12,6 +12,7 @@ from homeassistant.helpers import device_registry as dr
 from .api import AngelCloudAPI
 from .const import (
     CONF_ACCESS_TOKEN,
+    CONF_REFRESH_TOKEN,
     CONF_SN,
     CONF_USER_ID,
     CONF_WX_OPEN_ID,
@@ -39,6 +40,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         config=config,
         sn=config.get(CONF_SN, ""),
         token=config.get(CONF_ACCESS_TOKEN, ""),
+        refresh_token=config.get(CONF_REFRESH_TOKEN, ""),
         user_id=config.get(CONF_USER_ID, ""),
         wx_open_id=config.get(CONF_WX_OPEN_ID, ""),
     )

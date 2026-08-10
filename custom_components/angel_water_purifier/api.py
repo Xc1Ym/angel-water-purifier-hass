@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from typing import Any
 
 from aiohttp import ClientConnectorError, ClientError, ClientTimeout, ContentTypeError
@@ -16,6 +17,15 @@ _LOGGER = logging.getLogger(__name__)
 API_BASE = "https://iot.angelgroup.com.cn"
 REQUEST_TIMEOUT = 30
 MAX_RETRIES = 2
+
+# OAuth2 客户端凭证（微信小程序内固定值）
+OAUTH_CLIENT_ID = "angelWebApi"
+OAUTH_CLIENT_SECRET = "caebe54dac9f4e51addd5d0a4a6f289a"
+OAUTH_TOKEN_URL = f"{API_BASE}/iotmp-openauth/oauth/token"
+
+# access_token 剩余有效期低于该秒数时提前刷新（access_token 有效期约 24h）
+TOKEN_REFRESH_THRESHOLD = 600
+# refresh_token 有效期约 30 天，每次刷新后自动旋转续期
 
 WECHAT_UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -73,18 +83,37 @@ class AngelCloudAPI(AngelDeviceAPI):
         token: str = "",
         user_id: str = "",
         wx_open_id: str = "",
+        refresh_token: str = "",
     ) -> None:
         super().__init__(hass, config)
         self._sn = sn
         self._token = token
         self._user_id = user_id
         self._wx_open_id = wx_open_id
+        self._refresh_token = refresh_token
         self._session = None
         self._device_info: dict[str, Any] = {}
+
+        # Token 生命周期状态（epoch 秒）
+        self._expires_at: float | None = None
+        self._refresh_expires_at: float | None = None
+
+        self._token_lock = asyncio.Lock()
+        self._token_store = None
 
     @property
     def device_info(self) -> dict[str, Any]:
         return self._device_info
+
+    @property
+    def token_expires_at(self) -> float | None:
+        """access_token 过期时间（epoch），供诊断面板使用."""
+        return self._expires_at
+
+    @property
+    def has_refresh_token(self) -> bool:
+        """是否配置了 refresh_token（可自动续期）."""
+        return bool(self._refresh_token)
 
     # ------------------------------------------------------------------ #
     #  Lifecycle
@@ -92,12 +121,28 @@ class AngelCloudAPI(AngelDeviceAPI):
 
     async def async_connect(self) -> bool:
         self._session = aiohttp_client.async_get_clientsession(self.hass)
+        await self._load_tokens()
 
         if not self._sn:
             _LOGGER.error("❌ 未配置 SN")
             return False
+        if not self._token and not self._refresh_token:
+            _LOGGER.error("❌ 未配置 Token 或 Refresh Token")
+            return False
+
+        # 配置了 refresh_token：启动时强制刷新一次，验证有效性并拿到最新 token
+        if self._refresh_token:
+            if await self._refresh_token_if_needed(force=True):
+                _LOGGER.info("✅ Token 刷新成功 | SN=%s", self._sn)
+            else:
+                _LOGGER.error(
+                    "❌ Refresh Token 无效或刷新失败，请重新从小程序抓包获取后更新配置 | SN=%s",
+                    self._sn,
+                )
+                return False
+
         if not self._token:
-            _LOGGER.error("❌ 未配置 Token")
+            _LOGGER.error("❌ 无有效 Token")
             return False
 
         try:
@@ -124,6 +169,109 @@ class AngelCloudAPI(AngelDeviceAPI):
     async def async_disconnect(self) -> None:
         self._session = None
         self._connected = False
+
+    # ------------------------------------------------------------------ #
+    #  Token 管理（OAuth2 refresh_token 自动续期）
+    # ------------------------------------------------------------------ #
+
+    async def _load_tokens(self) -> None:
+        """从 HA Store 加载持久化的 token 状态（按 SN 隔离）."""
+        from homeassistant.helpers.storage import Store
+
+        self._token_store = Store[dict[str, Any]](
+            self.hass, version=1, key=f"angel_water_purifier_tokens_{self._sn}"
+        )
+        data = await self._token_store.async_load()
+        if not isinstance(data, dict):
+            return
+
+        # 配置项里的 refresh_token 优先，Store 里缓存的兜底
+        self._refresh_token = self._refresh_token or data.get("refresh_token", "")
+        self._token = self._token or data.get("access_token", "")
+        self._expires_at = data.get("expires_at")
+        self._refresh_expires_at = data.get("refresh_expires_at")
+
+    async def _save_tokens(self) -> None:
+        """持久化最新 token，供重启后继续自动续期."""
+        if self._token_store is None:
+            return
+        await self._token_store.async_save({
+            "access_token": self._token,
+            "refresh_token": self._refresh_token,
+            "expires_at": self._expires_at,
+            "refresh_expires_at": self._refresh_expires_at,
+        })
+
+    def _token_expiring(self) -> bool:
+        """access_token 是否已过期或接近过期."""
+        if self._expires_at is None:
+            # 无过期信息（旧配置），假设有效，请求失败时由 401 兜底
+            return False
+        return time.time() > self._expires_at - TOKEN_REFRESH_THRESHOLD
+
+    async def _refresh_token_if_needed(self, force: bool = False) -> bool:
+        """确保 access_token 有效，需要时用 refresh_token 自动刷新.
+
+        force=True 时跳过有效期检查直接刷新（连接时 / 401 时使用）。
+        """
+        async with self._token_lock:
+            # token 仍有效且非强制 → 无需刷新
+            if not force and self._token and not self._token_expiring():
+                return True
+            if not self._refresh_token:
+                # 未配置 refresh_token：只能依赖现有 token
+                return bool(self._token)
+            return await self._do_refresh()
+
+    async def _do_refresh(self) -> bool:
+        """用 refresh_token 换取新 token（OAuth2 标准流程，返回全新 token 对）."""
+        if self._session is None:
+            self._session = aiohttp_client.async_get_clientsession(self.hass)
+
+        params = {
+            "client_id": OAUTH_CLIENT_ID,
+            "client_secret": OAUTH_CLIENT_SECRET,
+            "grant_type": "refresh_token",
+            "refresh_token": self._refresh_token,
+        }
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": WECHAT_UA,
+            "Accept": "*/*",
+        }
+
+        try:
+            async with self._session.post(
+                OAUTH_TOKEN_URL, data=params, headers=headers,
+                timeout=ClientTimeout(total=REQUEST_TIMEOUT),
+            ) as resp:
+                if resp.status != 200:
+                    _LOGGER.error("❌ Token 刷新失败: HTTP %d", resp.status)
+                    return False
+                data = await resp.json()
+        except (ClientError, asyncio.TimeoutError, ContentTypeError) as exc:
+            _LOGGER.error("❌ Token 刷新请求失败: %s", exc)
+            return False
+
+        new_token = data.get("access_token")
+        if not new_token:
+            _LOGGER.error("❌ Token 刷新响应无效: %s", data.get("error") or data.get("retMsg") or data)
+            return False
+
+        old_refresh = self._refresh_token
+        self._token = new_token
+        if data.get("refresh_token"):
+            self._refresh_token = data["refresh_token"]
+        self._expires_at = time.time() + int(data.get("expires_in", 86399))
+        self._refresh_expires_at = time.time() + int(data.get("refresh_expires_in", 2591999))
+
+        await self._save_tokens()
+        hours = (self._expires_at - time.time()) / 3600
+        if old_refresh != self._refresh_token:
+            _LOGGER.info("🔄 Token 已自动刷新（refresh_token 已旋转）| 有效期 %.1f 小时", hours)
+        else:
+            _LOGGER.info("🔄 Token 已自动刷新 | 有效期 %.1f 小时", hours)
+        return True
 
     # ------------------------------------------------------------------ #
     #  Data fetching
@@ -189,26 +337,39 @@ class AngelCloudAPI(AngelDeviceAPI):
             self._session = aiohttp_client.async_get_clientsession(self.hass)
 
         url = f"{API_BASE}{path}"
-        headers = self._build_headers()
 
-        try:
-            async with self._session.request(
-                method=method, url=url, headers=headers,
-                json=json_data, params=params,
-                timeout=ClientTimeout(total=REQUEST_TIMEOUT),
-                ssl=True,
-            ) as resp:
-                if resp.status != 200:
-                    body = (await resp.read())[:200] if resp.status >= 400 else b""
-                    _LOGGER.warning("⚠️ HTTP %d %s %s", resp.status, method, path)
-                    return None
-                try:
-                    return await resp.json()
-                except ContentTypeError:
-                    return None
-        except (ClientConnectorError, asyncio.TimeoutError) as exc:
-            _LOGGER.warning("⚠️ 请求失败 %s %s: %s", method, path, exc)
+        # 确保 access_token 有效（过期自动刷新）
+        if not await self._refresh_token_if_needed():
+            _LOGGER.error("❌ 无有效访问令牌 (%s %s)", method, path)
             return None
+
+        for attempt in range(2):
+            headers = self._build_headers()
+            try:
+                async with self._session.request(
+                    method=method, url=url, headers=headers,
+                    json=json_data, params=params,
+                    timeout=ClientTimeout(total=REQUEST_TIMEOUT),
+                    ssl=True,
+                ) as resp:
+                    if resp.status == 401:
+                        # access_token 失效 → 强制刷新后重试一次
+                        _LOGGER.warning("⚠️ 401 未授权，刷新 token 后重试")
+                        if not await self._refresh_token_if_needed(force=True):
+                            return None
+                        continue
+                    if resp.status != 200:
+                        body = (await resp.read())[:200] if resp.status >= 400 else b""
+                        _LOGGER.warning("⚠️ HTTP %d %s %s", resp.status, method, path)
+                        return None
+                    try:
+                        return await resp.json()
+                    except ContentTypeError:
+                        return None
+            except (ClientConnectorError, asyncio.TimeoutError) as exc:
+                _LOGGER.warning("⚠️ 请求失败 %s %s: %s", method, path, exc)
+                return None
+        return None
 
     async def _request_device_detail(self, data_type: int = 0) -> dict | None:
         params = {"sn": self._sn, "dataType": str(data_type)}

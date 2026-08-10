@@ -13,6 +13,7 @@ from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
     CONF_ACCESS_TOKEN,
+    CONF_REFRESH_TOKEN,
     CONF_SN,
     CONF_USER_ID,
     CONF_WX_OPEN_ID,
@@ -49,6 +50,7 @@ class AngelWaterPurifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data={
                     CONF_SN: user_input[CONF_SN],
                     CONF_ACCESS_TOKEN: user_input.get(CONF_ACCESS_TOKEN, ""),
+                    CONF_REFRESH_TOKEN: user_input.get(CONF_REFRESH_TOKEN, ""),
                     CONF_USER_ID: user_input.get(CONF_USER_ID, ""),
                     CONF_WX_OPEN_ID: user_input.get(CONF_WX_OPEN_ID, ""),
                     CONF_SCAN_INTERVAL: user_input.get(
@@ -60,6 +62,7 @@ class AngelWaterPurifierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         data_schema = vol.Schema({
             vol.Required(CONF_SN): str,
             vol.Optional(CONF_ACCESS_TOKEN, default=""): str,
+            vol.Optional(CONF_REFRESH_TOKEN, default=""): str,
             vol.Optional(CONF_USER_ID, default=""): str,
             vol.Optional(CONF_WX_OPEN_ID, default=""): str,
             vol.Optional(
@@ -99,14 +102,21 @@ class AngelWaterPurifierOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
+        current = {
+            **self.config_entry.data,
+            **self.config_entry.options,
+        }
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema({
                 vol.Optional(
                     CONF_SCAN_INTERVAL,
-                    default=self.config_entry.options.get(
-                        CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
-                    ),
+                    default=current.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
                 ): vol.All(vol.Coerce(int), vol.Range(min=30, max=3600)),
+                # refresh_token 可选：填写后 access_token 过期自动续期，无需手动更新
+                vol.Optional(
+                    CONF_REFRESH_TOKEN,
+                    default=current.get(CONF_REFRESH_TOKEN, ""),
+                ): str,
             }),
         )

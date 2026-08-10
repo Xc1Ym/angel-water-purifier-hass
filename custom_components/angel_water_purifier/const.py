@@ -14,6 +14,7 @@ CONF_SN: Final = "sn"
 CONF_ACCESS_TOKEN: Final = "access_token"
 CONF_USER_ID: Final = "user_id"
 CONF_WX_OPEN_ID: Final = "wx_open_id"
+CONF_REFRESH_TOKEN: Final = "refresh_token"
 CONF_SCAN_INTERVAL: Final = "scan_interval"
 
 DEFAULT_SCAN_INTERVAL: Final = 120

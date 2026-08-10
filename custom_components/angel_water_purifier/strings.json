@@ -6,6 +6,7 @@
         "data": {
           "sn": "设备序列号 (SN)",
           "access_token": "Bearer Token",
+          "refresh_token": "Refresh Token (可选，填了可自动续期)",
           "user_id": "用户 ID (User-Id)",
           "wx_open_id": "微信 OpenID (可选)",
           "scan_interval": "轮询间隔（秒）"
@@ -24,7 +25,10 @@
     "step": {
       "init": {
         "title": "安吉尔净水器 - 选项",
-        "data": { "scan_interval": "轮询间隔（秒）" }
+        "data": {
+          "scan_interval": "轮询间隔（秒）",
+          "refresh_token": "Refresh Token (可选，填了可自动续期)"
+        }
       }
     }
   },
